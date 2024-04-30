@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VentaCostoEstandar_Detallada</title>
+</head>
+
+<body>
+
+    <!-- CONFIGURACION FREEMARKER -->
+    <#setting number_format=",##0.00" />
+    <#function generateVariationPercent current last>
+        <#assign percent=0 />
+        <#attempt>
+
+            <#if (current> 0 && last = 0)>
+                <#assign percent=1 />
+                <#else>
+                    <#assign percent=(current-last)/last />
+            </#if>
+
+            <#recover>
+                <#assign percent=0 />
+        </#attempt>
+        <#return percent />
+    </#function>
+
+    <!-- ESTO ES LO QUE VE EL USUARIO -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fomantic-ui/2.9.3/components/icon.min.css" />
+
+    <div class="bm-viewer">
+        <div class="bm-viewer-action">
+            <i class="big file green excel icon" onclick="exportToExcel()" style="margin-left: 10px;"></i>
+        </div>
+        <div class="bm-container">
+            <div class="bm-container-body">
+                <table class="bm-report-table">
+
+                    <!-- CABECERA -->
+                    <thead>
+                        <tr>
+                            <th>
+                                <span>&nbsp;</span>
+                            </th>
+
+                            <#list context.headers as header>
+                                <th class="right" colspan="2">
+                                    ${header.current.text}
+                                </th>
+                                <th class="right" colspan="2">
+                                    ${header.last.text}
+                                </th>
+                                <th class="separador">&nbsp;</th>
+                            </#list>
+
+                            <th class="right" colspan="2">
+                                ${context.summary.current.text}
+                            </th>
+                            <th class="right" colspan="2">
+                                ${context.summary.last.text}
+                            </th>
+                        </tr>
+
+                        <tr>
+                            <th>
+                                <span>Concepto</span>
+                            </th>
+
+                            <#list context.headers as header>
+                                <th class="right">
+                                    <b style="text-transform: none;">Cantidad</b>
+                                </th>
+                                <th class="right">
+                                    <b style="text-transform: none;">Costo</b>
+                                </th>
+                                <th class="right">
+                                    <b style="text-transform: none;">Cantidad</b>
+                                </th>
+                                <th class="right">
+                                    <b style="text-transform: none;">Costo</b>
+                                </th>
+                                <th class="separador">&nbsp;</th>
+                            </#list>
+
+                            <th class="right">
+                                <b style="text-transform: none;">Cantidad</b>
+                            </th>
+                            <th class="right">
+                                <b style="text-transform: none;">Costo</b>
+                            </th>
+                            <th class="right">
+                                <b style="text-transform: none;">Cantidad</b>
+                            </th>
+                            <th class="right">
+                                <b style="text-transform: none;">Costo</b>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <!-- CUERPO -->
+                    <tbody>
+                        <#list context.centers as center>
+                            <!-- TOTALES -->
+                            <tr bm-parent="${center.id}">
+                                <!-- CONCEPTO - BONIF DE VENTAS DEL MES -->
+                                <td>
+                                    ${center.name}
+                                </td>
+
+                                <!-- TOTALES POR CONCEPTO Y PERIODO (ACTUAL VS ULTIMO) -->
+                                <#list context.headers as header>
+                                    <#assign current=center.period[header.current.id] />
+                                    <#assign last=center.period[header.last.id] />
+                                    <td class="right">
+                                        <div class="title">
+                                            <span class="bm-lbl" bm-period="${header.current.id}" bm-concept=""
+                                                bm-center="${center.id}">
+                                                ${current.cantidad}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td class="right">
+                                        <div class="title">
+                                            <span class="bm-lbl" bm-period="${header.current.id}" bm-concept=""
+                                                bm-center="${center.id}">
+                                                ${current.costo}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td class="right">
+                                        <div class="title">
+                                            <span class="bm-lbl" bm-period="${header.last.id}" bm-concept=""
+                                                bm-center="${center.id}">
+                                                ${last.cantidad}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td class="right">
+                                        <div class="title">
+                                            <span class="bm-lbl" bm-period="${header.last.id}" bm-concept=""
+                                                bm-center="${center.id}">
+                                                ${last.costo}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td class="separador">&nbsp;</td>
+                                </#list>
+
+                                <!-- TOTALES POR CONCEPTO Y AÑO (ACTUAL VS ULTIMO) -->
+                                <td class="right">
+                                    <div class="title">${center.current.cantidad}</div>
+                                </td>
+
+                                <td class="right">
+                                    <div class="title">${center.current.costo}</div>
+                                </td>
+
+                                <td class="right">
+                                    <div class="title">${center.last.cantidad}</div>
+                                </td>
+
+                                <td class="right">
+                                    <div class="title">${center.last.costo}</div>
+                                </td>
+                            </tr>
+                        </#list>
+
+                        <!-- TOTALES -->
+                        <tr class="summary-total">
+                            <td>Totales</td>
+                            <#list context.headers as header>
+                                <#assign current=context.total[header.current.id] />
+                                <#assign last=context.total[header.last.id] />
+                                <td class="right">${current.cantidad}</td>
+                                <td class="right">${current.costo}</td>
+                                <td class="right">${last.cantidad}</td>
+                                <td class="right">${last.costo}</td>
+                                <td class="separador">&nbsp;</td>
+                            </#list>
+                            <td class="right">${context.summary.current.cantidad}</td>
+                            <td class="right">${context.summary.current.costo}</td>
+                            <td class="right">${context.summary.last.cantidad}</td>
+                            <td class="right">${context.summary.last.costo}</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- CERRAR ESTO ES LO QUE VE EL USUARIO -->
+
+    <script>
+        function exportToExcel() {
+
+            const xlsHref = window.location.href + '&xls=T';
+
+            const a = document.createElement('a');
+            a.href = xlsHref;
+
+            // Añade el enlace al documento y haz clic en él para descargar
+            document.body.appendChild(a);
+            a.click();
+
+            // Limpia el objeto URL y elimina el enlace
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+    </script>
+
+</body>
+
+</html>
